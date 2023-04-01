@@ -1,0 +1,15 @@
+version: '3'
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - PYTHONPATH=.
+      - PYTHONIOENCODING=utf8
+    env_file:
+      - .env
+    volumes:
+      - './sqlite_db:/opt/sqlite_db'
+volumes:
+  data:

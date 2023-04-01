@@ -1,0 +1,14 @@
+.cache/
+.idea/
+.tox/
+__pycache__/
+logs/
+venv/
+.coverage
+.DS_Store
+htmlcov/
+docs/build/
+.pytest_cache/
+.scannerwork/
+.env
+sqlite_db/

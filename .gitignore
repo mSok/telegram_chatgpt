@@ -128,5 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/sqlite_db/
+
 .vscode/
+sqlite_db/*
+!sqlite_db/.gitkeep
+

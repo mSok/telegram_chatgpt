@@ -4,7 +4,7 @@ import logging
 import telegram
 from src import config
 from src.constants import BotMode
-from src.database import models
+from src.database import models, connect_db
 from src.open_ai import chat_gpt
 from telegram.ext import (Application, CallbackContext, CommandHandler,
                           MessageHandler, filters)
@@ -215,6 +215,9 @@ async def post_init(application: Application) -> None:
 
 def start_bot() -> None:
     """Start the bot."""
+    # connect_db
+    connect_db()
+
     log.info("Start BOT")
     # Create the Application and pass it your bot's token.
     application = (

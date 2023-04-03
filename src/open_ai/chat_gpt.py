@@ -23,7 +23,7 @@ def get_conversation_by_id(id: int) -> typing.Iterable[dict[str, str]]:
 
 def append_to_conversation(id: int, messages: list[dict[str, str]]):
     for message in messages:
-        return CHAT_CONVERSATION[id].append(message)
+        CHAT_CONVERSATION[id].append(message)
 
 
 def clear_conversation(id: int):

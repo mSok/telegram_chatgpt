@@ -175,6 +175,8 @@ async def get_status(update, context):
             "enable": chat.enable,
             "mode": chat.mode,
             "prompt": chat.prompt,
+            "model": config.AI_MODEL,
+            "chat_id": update.message.chat_id,
         },
         indent=4,
         default=str,

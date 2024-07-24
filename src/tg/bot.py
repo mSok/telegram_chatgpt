@@ -180,6 +180,7 @@ async def get_status(update, context):
         },
         indent=4,
         default=str,
+        ensure_ascii=False,
     )
 
     return await context.bot.send_message(

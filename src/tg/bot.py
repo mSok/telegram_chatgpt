@@ -34,7 +34,7 @@ def check_access_to_chat(update: telegram.Update, check_admin_rights=False) -> b
     return True
 
 
-async def request(update, context):
+async def request(update: telegram.Update, context):
     log.debug("request %s", update.message.text)
 
     if not check_access_to_chat(update):
@@ -49,10 +49,10 @@ async def request(update, context):
         message=message,
         conversation_id=chat.id,
     )
-
-    await update.message.reply_text(
-        text=answer,
-    )
+    max_length = 4096
+    parts = [answer[i:i + max_length] for i in range(0, len(answer), max_length)]
+    for part in parts:
+        await update.message.reply_text(text=part)
 
 
 async def on_message(update, context):

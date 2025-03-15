@@ -9,4 +9,4 @@ log = logging.getLogger(__name__)
 def connect_db():
     log.info("Connecting DB %s...", config.DB_NAME)
     models.sql_lite_db.connect()
-    models.sql_lite_db.create_tables([models.Chat, models.BotAdmin], safe=True)
+    models.sql_lite_db.create_tables([models.Chat, models.BotAdmin, models.ImagePrompt], safe=True)

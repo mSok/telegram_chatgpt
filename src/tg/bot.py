@@ -1,5 +1,8 @@
+from collections import defaultdict
+from datetime import date
 import json
 import logging
+import random
 
 import telegram
 from src import config
@@ -15,9 +18,11 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from src.image_gen import ImageGenerator
+from src.database.models import add_chat_to_whitelist
 
 log = logging.getLogger(__name__)
-
+fails_by_date = defaultdict(int)
 
 def check_access_to_chat(update: telegram.Update, check_admin_rights=False) -> bool:
     """Проверяем включен ли бот в чате"""
@@ -68,6 +73,10 @@ async def request(update: telegram.Update, context):
     for part in parts:
         await update.message.reply_text(text=part)
 
+    # % шанс сгенерировать изображение
+    if random.random() < chat.img_chance:
+        await generate_image(update=update, context=context)
+
 
 async def on_message(update, context):
     log.debug("on_message %s", update.message.text)
@@ -89,6 +98,9 @@ async def on_message(update, context):
         chat_id=update.effective_chat.id,
         text=answer,
     )
+    # % шанс сгенерировать изображение
+    if random.random() < chat.img_chance:
+        await generate_image(update=update, context=context)
 
 
 async def set_enable(update, context):
@@ -284,21 +296,90 @@ async def add_chat_or_user(update: telegram.Update, context: CallbackContext):
     await request_admin_approval(context.bot, chat_id, config.TELEGRAM_ADMIN_USER_ID)
 
 
-async def button_callback(update: telegram.Update, context: CallbackContext):
+async def button_callback(update: telegram.Update, context: CallbackContext) -> None:
     query = update.callback_query
-    await query.answer()  # Подтверждаем получение callback
+    if not query:
+        log.error("Callback query is None")
+        return
 
-    # Получаем данные из callback_data
-    data = query.data
+    await query.answer()
+    callback_data = query.data
+    if not callback_data:
+        log.error("Callback data is None")
+        return
 
-    if data.startswith("approve_"):
-        chat_id = int(data.split("_")[1])
-        models.Chat.set_state(chat_id, True)
-        await context.bot.send_message(chat_id=chat_id, text="Бот теперь может отвечать в этом чате.")
-    elif data.startswith("deny_"):
-        chat_id = int(data.split("_")[1])
-        # Логика для обработки отклонения
-        await context.bot.send_message(chat_id=chat_id, text="Запрос на добавление бота отклонен.")
+    chat_id = None
+    if callback_data.startswith("approve:"):
+        chat_id = callback_data.split(":")[1]
+    elif callback_data.startswith("deny:"):
+        chat_id = callback_data.split(":")[1]
+
+    if not chat_id:
+        log.error("Chat ID is None")
+        return
+
+    if callback_data.startswith("approve:"):
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="✅ Запрос на добавление бота одобрен. Теперь вы можете общаться со мной.",
+        )
+        await query.edit_message_text(text=f"✅ Запрос на добавление бота в чат {chat_id} одобрен.")
+        add_chat_to_whitelist(chat_id)
+    elif callback_data.startswith("deny:"):
+        await context.bot.send_message(chat_id=chat_id, text="❌ Запрос на добавление бота отклонен.")
+        await query.edit_message_text(text=f"❌ Запрос на добавление бота в чат {chat_id} отклонен.")
+
+
+async def generate_image(update: telegram.Update, context: CallbackContext):
+    log.debug("generate_image command")
+    if not config.IMAGE_GEN:
+        return
+
+    if not check_access_to_chat(update):
+        return
+
+    if not update.message or not update.message.text or not update.effective_chat:
+        log.error("Update message, text or effective_chat is None")
+        return
+
+    # Получаем промпт из сообщения или используем случайный
+    prompt = update.message.text.removeprefix("/generate_image").strip()
+    if fails_by_date[date.today()] > 3:
+        log.info("Закончились попытки на сегодня!")
+        return
+
+    if not prompt:
+        prompts = list(models.ImagePrompt.select())
+        if not prompts:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="❌ В базе данных нет доступных промптов.",
+            )
+            return
+
+        random_prompt = random.choice(prompts)
+        prompt = random_prompt.prompt
+    else:
+        prompt = chat_gpt.get_answer(
+            prompt=config.DEFAULT_PROMPT_IMAGE,
+            message=prompt,
+            conversation_id=None,
+        )
+    # Генерируем изображение
+    generator = ImageGenerator()
+    image_data = await generator.generate_image(prompt)
+
+    if not image_data:
+        fails_by_date[date.today()] += 1
+
+        log.debug("Не удалось сгенерировать изображение.")
+        return
+
+    await context.bot.send_photo(
+        chat_id=update.effective_chat.id,
+        photo=image_data,
+        caption=f"🎨 Что то интересное",
+    )
 
 
 async def post_init(application: Application) -> None:
@@ -311,6 +392,7 @@ async def post_init(application: Application) -> None:
     application.add_handler(CommandHandler("status", get_status))
     application.add_handler(CommandHandler("request", request))
     application.add_handler(CommandHandler("add_chat_or_user", add_chat_or_user))
+    application.add_handler(CommandHandler("generate_image", generate_image))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
 
     # Добавляем обработчик для callback
@@ -325,6 +407,8 @@ async def post_init(application: Application) -> None:
             ("set_mode", "member встревает во все разговоры, любой другой нет"),
             ("clear", "Очистить историю"),
             ("add_chat_or_user", "Добавить чат или пользователя"),
+            # Оставим скрытой командой - только для знающих
+            # ("generate_image", "Сгенерировать изображение по описанию"),
         ]
     )
 
@@ -332,6 +416,10 @@ async def post_init(application: Application) -> None:
 def start_bot() -> None:
     """Start the bot."""
     log.info("Start BOT")
+
+    # Инициализируем базовые промпты
+    # models.ImagePrompt.initialize_default_prompts()
+
     # Create the Application and pass it your bot's token.
     application = (
         Application.builder().token(config.TELEGRAM_TOKEN).post_init(post_init).build()

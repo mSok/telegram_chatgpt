@@ -31,15 +31,16 @@ def clear_conversation(id: int):
     CHAT_CONVERSATION[id] = deque(iterable=[], maxlen=config.MAX_HISTORY_LEN)
 
 
-def get_answer(prompt: str, message: str, conversation_id: int) -> str:
+def get_answer(prompt: str, message: str, conversation_id: int | None) -> str:
     message_text = [
         {
             "role": "system",
             "content": prompt,
         }
     ]
-    for conversation_message in get_conversation_by_id(conversation_id):
-        message_text.append(conversation_message)
+    if conversation_id:
+        for conversation_message in get_conversation_by_id(conversation_id):
+            message_text.append(conversation_message)
 
     # Add user message to request
     message_text.append(
@@ -68,12 +69,13 @@ def get_answer(prompt: str, message: str, conversation_id: int) -> str:
     if len(result) < MIN_LEN_RESPONSE and "No content" in result:
         return ""
 
-    append_to_conversation(
-        conversation_id,
-        [
-            {"role": "user", "content": message},
-            {"role": "assistant", "content": result},
-        ],
-    )
+    if conversation_id:
+        append_to_conversation(
+            conversation_id,
+            [
+                {"role": "user", "content": message},
+                {"role": "assistant", "content": result},
+            ],
+        )
 
     return result

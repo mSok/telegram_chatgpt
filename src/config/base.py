@@ -12,7 +12,7 @@ DEFAULT_BOT_PROMPT = (
     "Привет! Я бот, который может генерировать текст с помощью OpenAI GPT.\n"
 )
 
-AI_MODEL = "gpt-3.5-turbo"
+AI_MODEL = "gpt-4o-mini"
 
 
 OPEN_AI_TOKEN = ""

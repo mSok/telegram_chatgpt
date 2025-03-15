@@ -6,8 +6,15 @@ from src import config
 from src.constants import BotMode
 from src.database import models
 from src.open_ai import chat_gpt
-from telegram.ext import (Application, CallbackContext, CommandHandler,
-                          MessageHandler, filters)
+from telegram.ext import (
+    Application,
+    CallbackContext,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    CallbackQueryHandler,
+)
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 log = logging.getLogger(__name__)
 
@@ -35,14 +42,21 @@ def check_access_to_chat(update: telegram.Update, check_admin_rights=False) -> b
 
 
 async def request(update: telegram.Update, context):
-    log.debug("request %s", update.message.text)
+    log.debug("request %s", update.message.text if update.message else "No message")
 
     if not check_access_to_chat(update):
+        return
+
+    if not update.message or not update.message.text:
+        log.error("Update message or text is None")
         return
 
     message = update.message.text.removeprefix("/request")
 
     chat = models.Chat.get_by_id(update.message.chat_id)
+    if not chat:
+        log.error("Chat not found")
+        return
 
     answer = chat_gpt.get_answer(
         prompt=chat.prompt,
@@ -138,9 +152,17 @@ async def clear(update: telegram.Update, context: CallbackContext):
     log.debug("clear command")
     if not check_access_to_chat(update):
         return
+
+    if not update.message or not update.message.chat_id:
+        log.error("Update message or chat_id is None")
+        return
+
     chat_gpt.clear_conversation(update.message.chat_id)
 
-    return await context.bot.send_message(chat_id=update.effective_chat.id, text="Ok.")
+    return await context.bot.send_message(
+        chat_id=update.effective_chat.id if update.effective_chat else update.message.chat_id,
+        text="Ok."
+    )
 
 
 async def set_mode(update: telegram.Update, context: CallbackContext):
@@ -148,27 +170,48 @@ async def set_mode(update: telegram.Update, context: CallbackContext):
     if not check_access_to_chat(update):
         return
 
+    if not update.message or not update.message.text:
+        log.error("Update message or text is None")
+        return
+
     message = update.message.text.removeprefix("/set_mode").strip()
-    log.debug("set_mode command %s message for %s", message, update.message.chat_id)
+    log.debug("set_mode command %s message for %s", message, update.message.chat_id if update.message else "No chat_id")
 
     if not message in BotMode.__members__:
         return await context.bot.send_message(
-            chat_id=update.effective_chat.id,
+            chat_id=update.effective_chat.id if update.effective_chat else (update.message.chat_id if update.message else None),
             text="Only `member` or `request`",
             parse_mode=telegram.constants.ParseMode.MARKDOWN_V2,
         )
 
-    new_mode = models.Chat.set_mode(update.message.chat_id, BotMode(message))
+    chat_id = update.message.chat_id if update.message else None
+    if not chat_id:
+        log.error("Chat ID is None")
+        return
+
+    chat = models.Chat.get_by_id(chat_id)
+    if not chat:
+        log.error("Chat not found")
+        return
+
+    new_mode = models.Chat.set_mode(chat_id, BotMode(message))
 
     return await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=update.effective_chat.id if update.effective_chat else chat_id,
         text=f"Ok. {new_mode}",
     )
 
 
 async def get_status(update, context):
     log.debug("get_status command")
+    if not update.message or not update.message.chat_id:
+        log.error("Update message or chat_id is None")
+        return
+
     chat = models.Chat.get_by_id(update.message.chat_id)
+    if not chat:
+        log.error("Chat not found")
+        return
 
     json_data = json.dumps(
         {
@@ -184,10 +227,78 @@ async def get_status(update, context):
     )
 
     return await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=update.effective_chat.id if update.effective_chat else update.message.chat_id,
         text=f"""<code>{json_data}</code>""",
         parse_mode=telegram.constants.ParseMode.HTML,
     )
+
+
+async def request_admin_approval(bot, chat_id: int, admin_id: int):
+    try:
+        chat = await bot.get_chat(chat_id)
+        chat_title = chat.title if chat else 'неизвестный чат'
+        log.info("Имя чата: %s", chat_title)
+    except Exception as e:
+        log.error("Ошибка при получении информации о чате: %s", e)
+        return
+
+    # Создаем кнопки для подтверждения или отклонения
+    keyboard = [
+        [
+            InlineKeyboardButton("Разрешить", callback_data=f"approve_{chat_id}"),
+            InlineKeyboardButton("Отклонить", callback_data=f"deny_{chat_id}"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # Создаем ссылку на чат
+    chat_link = f"https://t.me/c/{chat_id}"
+
+    # Отправляем сообщение админу
+    await bot.send_message(
+        chat_id=admin_id,
+        text=f"Вы хотите разрешить боту отвечать в чате <a href='{chat_link}'>{chat_title}</a> (ID: {chat_id})?",
+        reply_markup=reply_markup,
+        parse_mode=telegram.constants.ParseMode.HTML
+    )
+    return True
+
+
+async def add_chat_or_user(update: telegram.Update, context: CallbackContext):
+    log.debug("add_chat_or_user command")
+    if not check_access_to_chat(update, check_admin_rights=True):
+        return
+
+    if not update.message or not update.message.text:
+        log.error("Update message or text is None")
+        return
+
+    message = update.message.text.removeprefix("/add_chat_or_user").strip()
+
+    chat_id = update.message.chat_id if update.message else None
+    if not chat_id:
+        log.error("Chat ID is None")
+        return
+
+    # Отправляем запрос админу на добавление чата или пользователя
+    await request_admin_approval(context.bot, chat_id, config.TELEGRAM_ADMIN_USER_ID)
+
+
+async def button_callback(update: telegram.Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()  # Подтверждаем получение callback
+
+    # Получаем данные из callback_data
+    data = query.data
+
+    if data.startswith("approve_"):
+        chat_id = int(data.split("_")[1])
+        models.Chat.set_state(chat_id, True)
+        await context.bot.send_message(chat_id=chat_id, text="Бот теперь может отвечать в этом чате.")
+    elif data.startswith("deny_"):
+        chat_id = int(data.split("_")[1])
+        # Логика для обработки отклонения
+        await context.bot.send_message(chat_id=chat_id, text="Запрос на добавление бота отклонен.")
 
 
 async def post_init(application: Application) -> None:
@@ -195,14 +306,15 @@ async def post_init(application: Application) -> None:
     application.add_handler(CommandHandler("disable", set_disable))
     application.add_handler(CommandHandler("set_prompt", set_prompt))
     application.add_handler(CommandHandler("default_prompt", set_default_prompt))
-
     application.add_handler(CommandHandler("clear", clear))
-
     application.add_handler(CommandHandler("set_mode", set_mode))
     application.add_handler(CommandHandler("status", get_status))
     application.add_handler(CommandHandler("request", request))
-
+    application.add_handler(CommandHandler("add_chat_or_user", add_chat_or_user))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
+
+    # Добавляем обработчик для callback
+    application.add_handler(CallbackQueryHandler(button_callback))
 
     await application.bot.set_my_commands(
         [
@@ -212,6 +324,7 @@ async def post_init(application: Application) -> None:
             ("status", "Статус"),
             ("set_mode", "member встревает во все разговоры, любой другой нет"),
             ("clear", "Очистить историю"),
+            ("add_chat_or_user", "Добавить чат или пользователя"),
         ]
     )
 

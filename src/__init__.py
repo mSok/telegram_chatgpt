@@ -1,3 +1,4 @@
 import src.config
-from src.telegram.bot import start_bot
+from src.database import connect_db
+from src.tg.bot import start_bot
 

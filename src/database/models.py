@@ -73,7 +73,7 @@ class Chat(BaseModel):
         chat, is_new = cls.get_or_create(
             id=id,
             defaults={
-                "enable": False,
+                "enable": True,
                 "prompt": prompt,
             },
         )
@@ -107,12 +107,11 @@ class ImagePrompt(BaseModel):
         for prompt in default_prompts:
             cls.get_or_create(prompt=prompt)
 
-def add_chat_to_whitelist(chat_id: str) -> None:
+def add_chat_to_whitelist(chat_id: int) -> None:
     """
     Добавляет чат в белый список разрешенных чатов.
 
     Args:
         chat_id: ID чата для добавления в белый список
     """
-    # TODO: Реализовать сохранение chat_id в базу данных или файл конфигурации
-    pass  # Временная заглушка
+    Chat.set_prompt(chat_id, "Ты чат бот помогающий пользователю и отвечаешь ему на поставленные вопросы.")

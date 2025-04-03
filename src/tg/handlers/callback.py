@@ -28,6 +28,11 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
     if not chat_id:
         log.error("Chat ID is None")
         return
+    try:
+        chat_id = int(chat_id)
+    except Exception as exc:
+        log.error("Chat ID Error %s", exc)
+        return
 
     if callback_data.startswith("approve_"):
         await context.bot.send_message(

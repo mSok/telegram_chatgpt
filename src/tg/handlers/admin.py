@@ -228,8 +228,6 @@ async def request_admin_approval(bot, chat_id: int, admin_id: int):
 async def add_chat_or_user(update: Update, context: CallbackContext):
     """Добавить чат или пользователя в белый список"""
     log.debug("add_chat_or_user command")
-    if not check_access_to_chat(update, check_admin_rights=True):
-        return
 
     message, chat_id = get_message_and_chat_id(update)
     if not chat_id:

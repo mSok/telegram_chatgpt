@@ -29,6 +29,10 @@ async def generate_image(update: Update, context: CallbackContext):
         log.error("Update message, text or chat is None")
         return
 
+    is_command = False
+    if '/generate_image' in message.text:
+        is_command = True
+
     # Получаем промпт из сообщения или используем случайный
     prompt = message.text.removeprefix("/generate_image").strip()
     if fails_by_date[date.today()] > 3:
@@ -59,6 +63,12 @@ async def generate_image(update: Update, context: CallbackContext):
     if not image_data:
         fails_by_date[date.today()] += 1
         log.debug("Не удалось сгенерировать изображение.")
+        if is_command:
+            await context.bot.send_message(
+                chat_id=message.chat_id,
+                text="Уууу! Бесплатный генератор не всегда может",
+                parse_mode=telegram.constants.ParseMode.MARKDOWN_V2,
+            )
         return
 
     await context.bot.send_photo(

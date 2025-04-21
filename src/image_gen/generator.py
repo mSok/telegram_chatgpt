@@ -1,3 +1,4 @@
+from io import BytesIO
 import logging
 from typing import Optional
 from src import config
@@ -27,7 +28,7 @@ class ImageGenerator:
 
         try:
             # Возвращаем байты изображения напрямую
-            return self.client.text_to_image(
+            pil_image = self.client.text_to_image(
                 prompt,
                 model=config.HUGGINGFACE_MODEL,
             )
@@ -35,3 +36,10 @@ class ImageGenerator:
         except Exception as e:
             log.error(f"Error generating image: {str(e)}")
             return None
+
+        # Конвертируем PIL.Image в байты
+        bio = BytesIO()
+        bio.name = 'yahoo.png'  # Telegram требует имя файла
+        pil_image.save(bio, 'PNG')
+        bio.seek(0)
+        return bio.getvalue()

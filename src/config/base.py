@@ -14,7 +14,7 @@ DEFAULT_BOT_PROMPT = (
 IMAGE_GEN = True
 DEFAULT_PROMPT_IMAGE = """Переведи этот текст на английском языке.
 """
-AI_MODEL = "gpt-4o-mini"
+AI_MODEL = "gpt-4.1"
 
 HUGGINGFACE_API_TOKEN = ""
 HUGGINGFACE_MODEL = "black-forest-labs/FLUX.1-dev"

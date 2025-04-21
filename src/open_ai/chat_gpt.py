@@ -49,7 +49,10 @@ def get_answer(prompt: str, message: str, conversation_id: int | None) -> str:
             "content": message,
         }
     )
-
+    t= {
+            "role": "user",
+            "content": 'Whoare you',
+        }
     try:
         response = openai.ChatCompletion.create(
             model=config.AI_MODEL,

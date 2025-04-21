@@ -1,8 +1,11 @@
 from io import BytesIO
 import logging
 from typing import Optional
+
+import requests
 from src import config
-from huggingface_hub import InferenceClient
+# import replicate
+from replicate.client import Client
 
 log = logging.getLogger(__name__)
 
@@ -12,11 +15,8 @@ class ImageGenerator:
         Инициализация генератора изображений
         :param api_token: API токен Hugging Face (если не указан, берется из конфига)
         """
-        self.api_token = api_token or config.HUGGINGFACE_API_TOKEN
-        self.client = InferenceClient(
-            provider="fal-ai",
-            api_key=self.api_token
-        )
+        self.replicate = Client(api_token=api_token or config.REPLICATE_API_TOKEN)
+
 
     async def generate_image(self, prompt: str) -> Optional[bytes]:
         """
@@ -28,18 +28,18 @@ class ImageGenerator:
 
         try:
             # Возвращаем байты изображения напрямую
-            pil_image = self.client.text_to_image(
-                prompt,
-                model=config.HUGGINGFACE_MODEL,
+            response = self.replicate.run(
+                config.IMAGE_MODEL,
+                input={"prompt": prompt},
             )
 
         except Exception as e:
             log.error(f"Error generating image: {str(e)}")
             return None
 
-        # Конвертируем PIL.Image в байты
-        bio = BytesIO()
-        bio.name = 'yahoo.png'  # Telegram требует имя файла
-        pil_image.save(bio, 'PNG')
-        bio.seek(0)
-        return bio.getvalue()
+        image_bytes = response.read()  # bytes
+
+        image_io = BytesIO(image_bytes)
+        image_io.name = "yahoo.png"  # нужно имя файла
+
+        return image_io

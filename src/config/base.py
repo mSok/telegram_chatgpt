@@ -17,7 +17,8 @@ DEFAULT_PROMPT_IMAGE = """Переведи этот текст на англий
 AI_MODEL = "gpt-4.1"
 
 HUGGINGFACE_API_TOKEN = ""
-HUGGINGFACE_MODEL = "black-forest-labs/FLUX.1-dev"
+REPLICATE_API_TOKEN = ""
+IMAGE_MODEL = "prunaai/hidream-l1-fast:17c237d753218fed0ed477cb553902b6b75735f48c128537ab829096ef3d3645"
 
 OPEN_AI_TOKEN = ""
 TELEGRAM_TOKEN = ""

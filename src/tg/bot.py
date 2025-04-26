@@ -1,27 +1,28 @@
 import logging
+
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
     filters,
-    CallbackQueryHandler,
 )
 
 from src import config
-from src.database import models
+
 from .handlers import (
-    set_enable,
-    set_disable,
-    set_prompt,
-    set_default_prompt,
-    clear,
-    set_mode,
-    get_status,
     add_chat_or_user,
+    button_callback,
+    clear,
+    generate_image,
+    get_status,
     on_message,
     request,
-    generate_image,
-    button_callback,
+    set_default_prompt,
+    set_disable,
+    set_enable,
+    set_mode,
+    set_prompt,
 )
 
 log = logging.getLogger(__name__)

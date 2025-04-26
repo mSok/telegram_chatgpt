@@ -1,10 +1,11 @@
 import logging
+
 import telegram
 from telegram.ext import CallbackContext
 
-from src import config
 from src.database import models
 from src.open_ai import chat_gpt
+
 from ..utils import check_access_to_chat
 
 log = logging.getLogger(__name__)

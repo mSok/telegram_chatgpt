@@ -1,16 +1,15 @@
-from io import BytesIO
 import logging
-from typing import Optional
+from io import BytesIO
 
-import requests
-from src import config
 # import replicate
 from replicate.client import Client
+
+from src import config
 
 log = logging.getLogger(__name__)
 
 class ImageGenerator:
-    def __init__(self, api_token: Optional[str] = None):
+    def __init__(self, api_token: str | None = None):
         """
         Инициализация генератора изображений
         :param api_token: API токен Hugging Face (если не указан, берется из конфига)
@@ -18,7 +17,7 @@ class ImageGenerator:
         self.replicate = Client(api_token=api_token or config.REPLICATE_API_TOKEN)
 
 
-    async def generate_image(self, prompt: str) -> Optional[bytes]:
+    async def generate_image(self, prompt: str) -> bytes | None:
         """
         Генерация изображения по текстовому описанию через Stable Diffusion
         :param prompt: Текстовое описание желаемого изображения
@@ -34,7 +33,7 @@ class ImageGenerator:
             )
 
         except Exception as e:
-            log.error(f"Error generating image: {str(e)}")
+            log.error(f"Error generating image: {e!s}")
             return None
 
         image_bytes = response.read()  # bytes

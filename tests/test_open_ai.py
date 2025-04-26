@@ -1,9 +1,9 @@
-from unittest import mock
-import pytest
-
 from collections import defaultdict, deque
 from functools import partial
-from src import config
+from unittest import mock
+
+import pytest
+
 from src.open_ai import chat_gpt
 
 

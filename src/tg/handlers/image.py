@@ -1,15 +1,17 @@
 import logging
 import random
-from datetime import date
 from collections import defaultdict
+from datetime import date
+
 import telegram
-from telegram.ext import CallbackContext
 from telegram import Update
+from telegram.ext import CallbackContext
 
 from src import config
 from src.database import models
-from src.open_ai import chat_gpt
 from src.image_gen import ImageGenerator
+from src.open_ai import chat_gpt
+
 from ..utils import check_access_to_chat
 
 log = logging.getLogger(__name__)
@@ -74,5 +76,5 @@ async def generate_image(update: Update, context: CallbackContext):
     await context.bot.send_photo(
         chat_id=message.chat_id,
         photo=image_data,
-        caption=f"🎨 Что то интересное",
+        caption="🎨 Что то интересное",
     )

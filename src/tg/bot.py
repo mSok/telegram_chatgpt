@@ -23,6 +23,7 @@ from .handlers import (
     set_enable,
     set_mode,
     set_prompt,
+    tldr,
 )
 
 log = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ async def post_init(application: Application) -> None:
     application.add_handler(CommandHandler("enable", set_enable))
     application.add_handler(CommandHandler("disable", set_disable))
     application.add_handler(CommandHandler("set_prompt", set_prompt))
+    application.add_handler(CommandHandler("tldr", tldr))
     application.add_handler(CommandHandler("default_prompt", set_default_prompt))
     application.add_handler(CommandHandler("clear", clear))
     application.add_handler(CommandHandler("set_mode", set_mode))

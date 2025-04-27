@@ -3,6 +3,7 @@ import logging
 import telegram
 from telegram.ext import CallbackContext
 
+from src import config
 from src.database import models
 from src.open_ai import chat_gpt
 
@@ -34,6 +35,70 @@ def save_history(message: telegram.Message):
         reply_to = save_history(message.reply_to_message) if message.reply_to_message else None
     )
 
+def split_message(msg: str, *, with_photo: bool) -> list[str]:
+    """Split the text into parts considering Telegram limits."""
+    parts = []
+    while msg:
+        # Determine the maximum message length based on
+        # with_photo and whether it's the first iteration
+        # (photo is sent only with the first message).
+        if parts:
+            max_msg_length = 4096
+        elif with_photo:
+            max_msg_length = 1024
+        else:
+            max_msg_length = 4096
+
+        if len(msg) <= max_msg_length:
+            # The message length fits within the maximum allowed.
+            parts.append(msg)
+            break
+
+        # Cut a part of the message with the maximum length from msg
+        # and find a position for a break by a newline character.
+        part = msg[:max_msg_length]
+        first_ln = part.rfind("\n")
+
+        if first_ln != -1:
+            # Newline character found.
+            # Split the message by it, excluding the character itself.
+            new_part = part[:first_ln]
+            parts.append(new_part)
+
+            # Trim msg to the length of the new part
+            # and remove the newline character.
+            msg = msg[first_ln + 1 :]
+            continue
+
+        # No newline character found in the message part.
+        # Try to find at least a space for a break.
+        first_space = part.rfind(" ")
+
+        if first_space != -1:
+            # Space character found.
+            # Split the message by it, excluding the space itself.
+            new_part = part[:first_space]
+            parts.append(new_part)
+
+            # Trimming msg to the length of the new part
+            # and removing the space.
+            msg = msg[first_space + 1 :]
+            continue
+
+        # No suitable place for a break found in the message part.
+        # Add the current part and trim the message to its length.
+        parts.append(part)
+        msg = msg[max_msg_length:]
+
+    return parts
+
+async def send_long_message(message: telegram.Message, text: str, parse_mode: str = 'Markdown'):
+
+    for part in split_message(text, with_photo=False):
+        await message.reply_text(
+            text=part,  # Отрендерить обратно в строку
+            parse_mode='Markdown'  # Указываем, что формат Markdown
+        )
 
 async def request(update: telegram.Update, context: CallbackContext):
     log.debug("request %s", update.message.text if update.message else "No message")
@@ -60,10 +125,7 @@ async def request(update: telegram.Update, context: CallbackContext):
         message=message,
         conversation_id=chat.id,
     )
-    max_length = 4096
-    parts = [answer[i:i + max_length] for i in range(0, len(answer), max_length)]
-    for part in parts:
-        await update.message.reply_text(text=part)
+    await send_long_message(update.message, answer)
 
 async def on_message(update: telegram.Update, context: CallbackContext):
     log.debug("on_message %s", update.message.text)
@@ -82,4 +144,57 @@ async def on_message(update: telegram.Update, context: CallbackContext):
         conversation_id=chat.id,
     )
 
-    await update.message.reply_text(text=answer)
+    await send_long_message(update.message, answer)
+
+
+async def tldr(update: telegram.Update, context: CallbackContext):
+    if not check_access_to_chat(update):
+        return
+    log.info('run tldr')
+    # remove command
+    messages = update.message.text.split(' ')[1:]
+    if messages:
+        try:
+            log_cnt = int(messages[0])
+        except ValueError:
+            log_cnt = 200
+
+        if len(messages) > 1:
+            try:
+                chat_id = int(messages[1])
+            except ValueError:
+                chat_id = update.message.chat_id
+
+    log.info(f'tldr {chat_id=}, {log_cnt=}')
+    history = list(
+        models.ChatHistory.select(models.ChatHistory, models.TGUser)
+        .join(models.TGUser)
+        .where(
+            models.ChatHistory.chat_id==chat_id,
+        ).order_by(
+            models.ChatHistory.created_at.desc()
+        ).limit(log_cnt)
+    )
+
+    history.reverse()
+    _columns = [
+        'id',
+        'reply_to_id',
+        'from_user.username',
+        'created_at',
+        'text',
+    ]
+
+    rows = [' | '.join(_columns)]
+    for row in history:
+        values = [str(models.get_attr(row, col)) for col in _columns]
+        rows.append(' | '.join(values))
+
+
+    answer = chat_gpt.get_answer(
+        prompt=config.SUMARIZE_PROMT,
+        message='\\n'.join(rows),
+        conversation_id=None,
+    )
+
+    await send_long_message(update.message, answer)

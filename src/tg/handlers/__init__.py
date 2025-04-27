@@ -9,7 +9,7 @@ from .admin import (
     set_prompt,
 )
 from .callback import button_callback
-from .chat import on_message, request
+from .chat import on_message, request, tldr
 from .image import generate_image
 
 __all__ = [
@@ -25,4 +25,5 @@ __all__ = [
     'set_enable',
     'set_mode',
     'set_prompt',
+    'tldr',
 ]

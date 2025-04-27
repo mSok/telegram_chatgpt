@@ -46,6 +46,7 @@ async def _save_history(message: Message, client: TelegramClient) -> tuple[bool,
         chat=message.chat_id,
     ) and message.text:
         models.ChatHistory.create(
+            created_at=message.date,
             chat = message.chat_id,
             message_id = message.id,
             text = message.text,

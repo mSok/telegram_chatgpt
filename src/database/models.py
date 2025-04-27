@@ -11,6 +11,13 @@ sql_lite_db = SqliteExtDatabase(
     config.DB_NAME, regexp_function=True, timeout=3, pragmas={"journal_mode": "wal"}
 )
 
+def get_attr(obj, attr_path):
+    """Получить вложенный атрибут по пути (например 'user.username')"""
+    attrs = attr_path.split('.')
+    value = obj
+    for attr in attrs:
+        value = getattr(value, attr)
+    return value
 
 class BaseModel(Model):
     class Meta:

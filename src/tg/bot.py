@@ -49,9 +49,10 @@ async def post_init(application: Application) -> None:
     await application.bot.set_my_commands(
         [
             ("request", "Задать вопрос боту"),
-            ("set_prompt", "Установить контекст общения"),
-            ("default_prompt", "Сбросить в default"),
-            ("status", "Статус"),
+            ("tldr", "TL;DR"),
+            # ("set_prompt", "Установить контекст общения"),
+            # ("default_prompt", "Сбросить в default"),
+            # ("status", "Статус"),
             ("set_mode", "member встревает во все разговоры, любой другой нет"),
             ("clear", "Очистить историю"),
             ("add_chat_or_user", "Добавить чат или пользователя"),

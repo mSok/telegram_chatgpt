@@ -153,17 +153,19 @@ async def tldr(update: telegram.Update, context: CallbackContext):
     log.info('run tldr')
     # remove command
     messages = update.message.text.split(' ')[1:]
+    chat_id = update.message.chat_id
+    log_cnt = 200
     if messages:
         try:
             log_cnt = int(messages[0])
         except ValueError:
-            log_cnt = 200
+            log.info(f'Not log_cnt {messages[0]}')
 
         if len(messages) > 1:
             try:
                 chat_id = int(messages[1])
             except ValueError:
-                chat_id = update.message.chat_id
+                log.info(f'Not chat_id {messages[1]}')
 
     log.info(f'tldr {chat_id=}, {log_cnt=}')
     history = list(

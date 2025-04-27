@@ -171,7 +171,7 @@ async def get_status(update: Update, context: CallbackContext):
         log.error("Chat ID is None")
         return
 
-    chat = models.Chat.get_by_id(chat_id)
+    chat = models.Chat.get_or_none(chat_id)
     if not chat:
         log.error("Chat not found")
         return

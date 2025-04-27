@@ -44,6 +44,8 @@ dependencies = [
     "pytest-mock==3.12.0",
     "ruff==0.3.0",
     "pre-commit==3.6.2",
+    "telethon>=1.40.0",
+    "dotenv>=0.9.9",
 ]
 
 [dependency-groups]
@@ -63,7 +65,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-select = [
+lint.select = [
     "E", # pyflakes
     "F", # pycodestyle errors
     "W", # pycodestyle warnings
@@ -84,12 +86,12 @@ select = [
     "FLY", # flynt
     "FURB", # refurb
 ]
-ignore = [
+lint.ignore = [
     "RET502", # Do not explicitly return None in function
     "E203", # Black cjrrect format whitespaces
     "F405", # May be undefined, or defined from star imports
 ]
-unfixable = ["E712"]
+lint.unfixable = ["E712"]
 
 [tool.ruff.isort]
 known-first-party = ["src"]

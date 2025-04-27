@@ -68,7 +68,7 @@ def start_bot() -> None:
     application = (
         Application.builder().token(config.TELEGRAM_TOKEN).post_init(post_init).build()
     )
-
+    # connect_db()
     if config.RUN_POOLING:
         log.info("Run bot in pollling mode 🚗")
         application.run_polling()

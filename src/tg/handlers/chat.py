@@ -10,6 +10,31 @@ from ..utils import check_access_to_chat
 
 log = logging.getLogger(__name__)
 
+
+def save_history(message: telegram.Message):
+    user = message.from_user
+    tg_user, _ = models.TGUser.get_or_create(
+        id=user.id,
+        defaults={
+            'name': user.name,
+            'username': user.username,
+            'is_bot': user.is_bot,
+            'full_name': user.full_name,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+        },
+    )
+
+
+    return models.ChatHistory.create(
+        chat = message.chat_id,
+        message_id = message.id,
+        text = message.text,
+        from_user = tg_user,
+        reply_to = save_history(message.reply_to_message) if message.reply_to_message else None
+    )
+
+
 async def request(update: telegram.Update, context: CallbackContext):
     log.debug("request %s", update.message.text if update.message else "No message")
 
@@ -20,7 +45,10 @@ async def request(update: telegram.Update, context: CallbackContext):
         log.error("Update message or text is None")
         return
 
-    message = update.message.text.removeprefix("/request")
+    save_history(update.message)
+
+    # вырезаем команду /request
+    message = ' '.join(update.message.text.split(' ')[1:]).strip()
 
     chat = models.Chat.get_by_id(update.message.chat_id)
     if not chat:
@@ -42,6 +70,7 @@ async def on_message(update: telegram.Update, context: CallbackContext):
 
     if not check_access_to_chat(update):
         return
+    save_history(update.message)
 
     chat = models.Chat.get_by_id(update.message.chat_id)
     if chat.mode != "member":
@@ -53,7 +82,4 @@ async def on_message(update: telegram.Update, context: CallbackContext):
         conversation_id=chat.id,
     )
 
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=answer,
-    )
+    await update.message.reply_text(text=answer)

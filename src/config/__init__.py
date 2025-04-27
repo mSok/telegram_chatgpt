@@ -1,6 +1,8 @@
 import ast
 import os
 
+from src import log_tools  # noqa: F401
+
 from .base import *  # noqa: F401, F403
 
 # Override config variables from environment

@@ -36,7 +36,8 @@ async def generate_image(update: Update, context: CallbackContext):
         is_command = True
 
     # Получаем промпт из сообщения или используем случайный
-    prompt = message.text.removeprefix("/generate_image").strip()
+    prompt = ' '.join(message.text.split(' ')[1:]).strip()
+
     if fails_by_date[date.today()] > 3:
         log.info("Закончились попытки на сегодня!")
         return
@@ -73,8 +74,7 @@ async def generate_image(update: Update, context: CallbackContext):
             )
         return
 
-    await context.bot.send_photo(
-        chat_id=message.chat_id,
+    await message.reply_photo(
         photo=image_data,
         caption="🎨 Что то интересное",
     )

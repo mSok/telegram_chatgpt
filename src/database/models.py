@@ -114,3 +114,28 @@ def add_chat_to_whitelist(chat_id: int) -> None:
         chat_id: ID чата для добавления в белый список
     """
     Chat.set_prompt(chat_id, "Ты чат бот помогающий пользователю и отвечаешь ему на поставленные вопросы.")
+
+
+class TGUser(BaseModel):
+    id = peewee.BigIntegerField(primary_key=True)
+    created_at: datetime = peewee.DateTimeField(default=datetime.now)
+    updated_at: datetime = peewee.DateTimeField(default=datetime.now)
+    name: str = peewee.TextField()
+    username: str = peewee.TextField()
+    is_bot: bool = peewee.BooleanField()
+    full_name: str = peewee.TextField(null=True)
+    first_name: str = peewee.TextField(null=True)
+    last_name: str = peewee.TextField(null=True)
+
+    def __str__(self) -> str:
+        return f'User({self.name} - {self.full_name})'
+
+class ChatHistory(BaseModel):
+    id = peewee.BigIntegerField(primary_key=True)
+    created_at = peewee.DateTimeField(default=datetime.now)
+    updated_at = peewee.DateTimeField(default=datetime.now)
+    chat = peewee.ForeignKeyField(Chat, backref='chathistory')
+    message_id = peewee.BigIntegerField()
+    text = peewee.TextField()
+    from_user = peewee.ForeignKeyField(TGUser, backref='user')
+    reply_to = peewee.ForeignKeyField('self', null=True)

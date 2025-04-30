@@ -92,12 +92,12 @@ def split_message(msg: str, *, with_photo: bool) -> list[str]:
 
     return parts
 
-async def send_long_message(message: telegram.Message, text: str, parse_mode: str = 'Markdown'):
+async def send_long_message(message: telegram.Message, text: str, parse_mode: str | None= None):
 
     for part in split_message(text, with_photo=False):
         await message.reply_text(
             text=part,  # Отрендерить обратно в строку
-            parse_mode='Markdown'  # Указываем, что формат Markdown
+            parse_mode=parse_mode
         )
 
 async def request(update: telegram.Update, context: CallbackContext):

@@ -1,15 +1,17 @@
 import logging
 import random
-from datetime import date
 from collections import defaultdict
+from datetime import date
+
 import telegram
-from telegram.ext import CallbackContext
 from telegram import Update
+from telegram.ext import CallbackContext
 
 from src import config
 from src.database import models
-from src.open_ai import chat_gpt
 from src.image_gen import ImageGenerator
+from src.open_ai import chat_gpt
+
 from ..utils import check_access_to_chat
 
 log = logging.getLogger(__name__)
@@ -29,8 +31,13 @@ async def generate_image(update: Update, context: CallbackContext):
         log.error("Update message, text or chat is None")
         return
 
+    is_command = False
+    if '/generate_image' in message.text:
+        is_command = True
+
     # Получаем промпт из сообщения или используем случайный
-    prompt = message.text.removeprefix("/generate_image").strip()
+    prompt = ' '.join(message.text.split(' ')[1:]).strip()
+
     if fails_by_date[date.today()] > 3:
         log.info("Закончились попытки на сегодня!")
         return
@@ -59,10 +66,15 @@ async def generate_image(update: Update, context: CallbackContext):
     if not image_data:
         fails_by_date[date.today()] += 1
         log.debug("Не удалось сгенерировать изображение.")
+        if is_command:
+            await context.bot.send_message(
+                chat_id=message.chat_id,
+                text="Уууу! Бесплатный генератор не всегда может",
+                parse_mode=telegram.constants.ParseMode.MARKDOWN_V2,
+            )
         return
 
-    await context.bot.send_photo(
-        chat_id=message.chat_id,
+    await message.reply_photo(
         photo=image_data,
-        caption=f"🎨 Что то интересное",
+        caption="🎨 Что то интересное",
     )

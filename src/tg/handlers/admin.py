@@ -1,19 +1,20 @@
 import json
 import logging
-from typing import Optional
+
 import telegram
-from telegram.ext import CallbackContext
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
+from telegram.ext import CallbackContext
 
 from src import config
 from src.constants import BotMode
 from src.database import models
 from src.open_ai import chat_gpt
+
 from ..utils import check_access_to_chat
 
 log = logging.getLogger(__name__)
 
-def get_message_and_chat_id(update: Update) -> tuple[Optional[Message], Optional[int]]:
+def get_message_and_chat_id(update: Update) -> tuple[Message | None, int | None]:
     """Helper function to get message and chat_id with proper type checking"""
     message = update.message if update and update.message else None
     chat_id = message.chat_id if message and message.chat else None
@@ -143,7 +144,7 @@ async def set_mode(update: Update, context: CallbackContext):
     mode = mode_text.removeprefix("/set_mode").strip()
     log.debug("set_mode command %s message for %s", mode, chat_id)
 
-    if not mode in BotMode.__members__:
+    if mode not in BotMode.__members__:
         return await context.bot.send_message(
             chat_id=chat_id,
             text="Only `member` or `request`",
@@ -170,7 +171,7 @@ async def get_status(update: Update, context: CallbackContext):
         log.error("Chat ID is None")
         return
 
-    chat = models.Chat.get_by_id(chat_id)
+    chat = models.Chat.get_or_none(chat_id)
     if not chat:
         log.error("Chat not found")
         return
@@ -228,8 +229,6 @@ async def request_admin_approval(bot, chat_id: int, admin_id: int):
 async def add_chat_or_user(update: Update, context: CallbackContext):
     """Добавить чат или пользователя в белый список"""
     log.debug("add_chat_or_user command")
-    if not check_access_to_chat(update, check_admin_rights=True):
-        return
 
     message, chat_id = get_message_and_chat_id(update)
     if not chat_id:

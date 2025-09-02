@@ -1,27 +1,29 @@
 import logging
+
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
     filters,
-    CallbackQueryHandler,
 )
 
 from src import config
-from src.database import models
+
 from .handlers import (
-    set_enable,
-    set_disable,
-    set_prompt,
-    set_default_prompt,
-    clear,
-    set_mode,
-    get_status,
     add_chat_or_user,
+    button_callback,
+    clear,
+    generate_image,
+    get_status,
     on_message,
     request,
-    generate_image,
-    button_callback,
+    set_default_prompt,
+    set_disable,
+    set_enable,
+    set_mode,
+    set_prompt,
+    tldr,
 )
 
 log = logging.getLogger(__name__)
@@ -31,6 +33,7 @@ async def post_init(application: Application) -> None:
     application.add_handler(CommandHandler("enable", set_enable))
     application.add_handler(CommandHandler("disable", set_disable))
     application.add_handler(CommandHandler("set_prompt", set_prompt))
+    application.add_handler(CommandHandler("tldr", tldr))
     application.add_handler(CommandHandler("default_prompt", set_default_prompt))
     application.add_handler(CommandHandler("clear", clear))
     application.add_handler(CommandHandler("set_mode", set_mode))
@@ -46,14 +49,14 @@ async def post_init(application: Application) -> None:
     await application.bot.set_my_commands(
         [
             ("request", "Задать вопрос боту"),
-            ("set_prompt", "Установить контекст общения"),
-            ("default_prompt", "Сбросить в default"),
-            ("status", "Статус"),
+            ("tldr", "TL;DR"),
+            # ("set_prompt", "Установить контекст общения"),
+            # ("default_prompt", "Сбросить в default"),
+            # ("status", "Статус"),
             ("set_mode", "member встревает во все разговоры, любой другой нет"),
             ("clear", "Очистить историю"),
             ("add_chat_or_user", "Добавить чат или пользователя"),
-            # Оставим скрытой командой - только для знающих
-            # ("generate_image", "Сгенерировать изображение по описанию"),
+            ("generate_image", "Сгенерировать изображение по описанию"),
         ]
     )
 
@@ -68,7 +71,7 @@ def start_bot() -> None:
     application = (
         Application.builder().token(config.TELEGRAM_TOKEN).post_init(post_init).build()
     )
-
+    # connect_db()
     if config.RUN_POOLING:
         log.info("Run bot in pollling mode 🚗")
         application.run_polling()

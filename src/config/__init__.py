@@ -1,9 +1,9 @@
 import ast
 import os
 
-import src.log_tools
+from src import log_tools  # noqa: F401
 
-from .base import *
+from .base import *  # noqa: F401, F403
 
 # Override config variables from environment
 # To override config variable with given name, set environment variable to `_module_prefix` + that name
@@ -19,5 +19,5 @@ for key, value in os.environ.items():
 
     try:
         locals()[pure_key] = ast.literal_eval(value)
-    except:  # pylint: disable=bare-except
+    except:  # noqa: E722
         locals()[pure_key] = value

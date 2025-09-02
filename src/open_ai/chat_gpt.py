@@ -31,7 +31,7 @@ def clear_conversation(id: int):
     CHAT_CONVERSATION[id] = deque(iterable=[], maxlen=config.MAX_HISTORY_LEN)
 
 
-def get_answer(prompt: str, message: str, conversation_id: int | None) -> str:
+def get_answer(prompt: str, message: str, conversation_id: int | None, model=config.AI_MODEL) -> str:
     message_text = [
         {
             "role": "system",
@@ -49,10 +49,9 @@ def get_answer(prompt: str, message: str, conversation_id: int | None) -> str:
             "content": message,
         }
     )
-
     try:
         response = openai.ChatCompletion.create(
-            model=config.AI_MODEL,
+            model=model,
             messages=message_text,
         )
     except Exception as exc:

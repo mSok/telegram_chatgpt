@@ -20,6 +20,9 @@ SUMARIZE_MODEL = "gpt-4.1-mini"
 HUGGINGFACE_API_TOKEN = ""
 REPLICATE_API_TOKEN = ""
 IMAGE_MODEL = "prunaai/hidream-l1-fast:17c237d753218fed0ed477cb553902b6b75735f48c128537ab829096ef3d3645"
+# In src/config/base.py
+IMAGE_TO_IMAGE_MODEL = "google/nano-banana"
+BANANO_PREFIX = ("banani", "banano")
 
 OPEN_AI_TOKEN = ""
 TELEGRAM_TOKEN = ""

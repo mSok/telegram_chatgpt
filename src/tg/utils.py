@@ -27,3 +27,13 @@ def check_access_to_chat(update: telegram.Update, check_admin_rights=False) -> b
         )
         return False
     return True
+
+
+def remove_any_prefix(text: str, prefixes: tuple[str, ...]) -> str:
+    """
+    Удаляет первый найденный префикс из кортежа из строки.
+    """
+    for prefix in prefixes:
+        if text.startswith(prefix):
+            return text.removeprefix(prefix)
+    return text

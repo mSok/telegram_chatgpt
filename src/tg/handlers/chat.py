@@ -6,6 +6,7 @@ from telegram.ext import CallbackContext
 from src import config
 from src.database import models
 from src.open_ai import chat_gpt
+from src.tg.handlers.image import generate_image_from_photo
 
 from ..utils import check_access_to_chat
 
@@ -30,7 +31,7 @@ def save_history(message: telegram.Message):
     return models.ChatHistory.create(
         chat = message.chat_id,
         message_id = message.id,
-        text = message.text,
+        text = message.text or '',
         from_user = tg_user,
         reply_to = save_history(message.reply_to_message) if message.reply_to_message else None
     )
@@ -134,6 +135,14 @@ async def on_message(update: telegram.Update, context: CallbackContext):
         return
     save_history(update.message)
 
+    if (
+        update.message.reply_to_message
+        and update.message.reply_to_message.photo
+        and update.message.text
+        and update.message.text.startswith(config.BANANO_PREFIX)
+    ):
+        return await generate_image_from_photo(update=update, context=context)
+
     chat = models.Chat.get_by_id(update.message.chat_id)
     if chat.mode != "member":
         return
@@ -144,7 +153,7 @@ async def on_message(update: telegram.Update, context: CallbackContext):
         conversation_id=chat.id,
     )
 
-    await send_long_message(update.message, answer)
+    return await send_long_message(update.message, answer)
 
 
 async def tldr(update: telegram.Update, context: CallbackContext):

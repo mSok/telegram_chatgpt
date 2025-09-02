@@ -1,7 +1,6 @@
 import logging
 from io import BytesIO
 
-# import replicate
 from replicate.client import Client
 
 from src import config
@@ -27,7 +26,7 @@ class ImageGenerator:
 
         try:
             # Возвращаем байты изображения напрямую
-            response = self.replicate.run(
+            response = await self.replicate.async_run(
                 config.IMAGE_MODEL,
                 input={"prompt": prompt},
             )
@@ -42,3 +41,37 @@ class ImageGenerator:
         image_io.name = "yahoo.png"  # нужно имя файла
 
         return image_io
+
+    async def generate_image_from_photo(self, prompt: str, photo_url: str) -> BytesIO | None:
+            """
+            Generate an image based on a prompt and input photo using Replicate
+            :param prompt: Text prompt for image modification
+            :param photo_url: URL of the input image
+            :return: BytesIO of the generated image or None in case of error
+            """
+            log.debug(f'Prompt for image {prompt}, photo URL: {photo_url}')
+
+            try:
+                # Prepare input for Replicate model that accepts image and prompt
+                input_data = {
+                    "prompt": prompt,
+                    "image_input": [photo_url]
+                }
+
+                response = await self.replicate.async_run(
+                    config.IMAGE_TO_IMAGE_MODEL,
+                    input=input_data
+                )
+
+            except Exception as e:
+                log.error(f"Error generating image from photo: {e!s}")
+                return None
+
+            # Read the response as bytes
+            image_bytes = response.read()  # bytes
+
+            # Create BytesIO object for Telegram
+            image_io = BytesIO(image_bytes)
+            image_io.name = "generated_image.jpg"  # needs a file name
+
+            return image_io

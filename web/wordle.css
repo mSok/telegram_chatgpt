@@ -1,0 +1,138 @@
+:root {
+    --background-color-light: #fff;
+    --text-color-light: #000;
+    --tile-border-color-light: #d3d6da;
+    --tile-border-color-focus-light: #87ceeb;
+    --correct-bg-light: #6aaa64;
+    --present-bg-light: #c9b458;
+    --absent-bg-light: #787c7e;
+
+    --background-color-dark: #121213;
+    --text-color-dark: #fff;
+    --tile-border-color-dark: #3a3a3c;
+    --tile-border-color-focus-dark: #5dbcd2;
+    --correct-bg-dark: #538d4e;
+    --present-bg-dark: #b59f3b;
+    --absent-bg-dark: #3a3a3c;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--background-color-light);
+    color: var(--text-color-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    max-width: 500px;
+}
+
+h1 {
+    color: var(--text-color-light);
+    font-size: 1.5rem;
+    margin: 20px 0;
+}
+
+#game-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: 5px;
+    padding: 10px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 350px;
+}
+
+.tile-input {
+    width: 50px; /* Standard width */
+    height: 50px; /* Standard height */
+    border: 2px solid var(--tile-border-color-light);
+    box-sizing: border-box;
+    background-color: transparent;
+    color: var(--text-color-light);
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    outline: none;
+    /* For older browsers */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.tile-input:focus {
+    border-color: var(--tile-border-color-focus-light);
+}
+
+.tile-input.correct, .tile-input.present, .tile-input.absent {
+    color: white;
+}
+
+.tile-input.correct {
+    background-color: var(--correct-bg-light);
+    border-color: var(--correct-bg-light);
+}
+
+.tile-input.present {
+    background-color: var(--present-bg-light);
+    border-color: var(--present-bg-light);
+}
+
+.tile-input.absent {
+    background-color: var(--absent-bg-light);
+    border-color: var(--absent-bg-light);
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: var(--background-color-dark);
+        color: var(--text-color-dark);
+    }
+
+    h1 {
+        color: var(--text-color-dark);
+    }
+
+    .tile-input {
+        border-color: var(--tile-border-color-dark);
+        color: var(--text-color-dark);
+    }
+
+    .tile-input:focus {
+        border-color: var(--tile-border-color-focus-dark);
+    }
+
+    .tile-input.correct, .tile-input.present, .tile-input.absent {
+        color: white;
+    }
+
+    .tile-input.correct {
+        background-color: var(--correct-bg-dark);
+        border-color: var(--correct-bg-dark);
+    }
+
+    .tile-input.present {
+        background-color: var(--present-bg-dark);
+        border-color: var(--present-bg-dark);
+    }
+
+    .tile-input.absent {
+        background-color: var(--absent-bg-dark);
+        border-color: var(--absent-bg-dark);
+    }
+}

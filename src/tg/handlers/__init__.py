@@ -11,6 +11,7 @@ from .admin import (
 from .callback import button_callback
 from .chat import on_message, request, tldr
 from .image import generate_image
+from .web import wordle
 
 __all__ = [
     'add_chat_or_user',
@@ -26,4 +27,5 @@ __all__ = [
     'set_mode',
     'set_prompt',
     'tldr',
+    'wordle',
 ]

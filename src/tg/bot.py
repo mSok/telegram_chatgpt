@@ -24,6 +24,7 @@ from .handlers import (
     set_mode,
     set_prompt,
     tldr,
+    wordle,
 )
 
 log = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ async def post_init(application: Application) -> None:
     application.add_handler(CommandHandler("request", request))
     application.add_handler(CommandHandler("add_chat_or_user", add_chat_or_user))
     application.add_handler(CommandHandler("generate_image", generate_image))
+    application.add_handler(CommandHandler("wordle", wordle))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
 
     # Добавляем обработчик для callback
@@ -57,6 +59,7 @@ async def post_init(application: Application) -> None:
             ("clear", "Очистить историю"),
             ("add_chat_or_user", "Добавить чат или пользователя"),
             ("generate_image", "Сгенерировать изображение по описанию"),
+            ("wordle", "Play Wordle"),
         ]
     )
 

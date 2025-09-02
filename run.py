@@ -6,6 +6,7 @@ import click
 from src.database import connect_db
 from src.tg.bot import start_bot
 from src.tg.scripts.load_history import get_messages
+from src.web_server import run_web_server
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +32,13 @@ def init_db():
 def run_bot():
     """Запустить Telegram бота"""
     start_bot()
+
+
+@cli.command()
+def start_web_server():
+    """Запустить веб сервер для игры"""
+    run_web_server()
+
 
 if __name__ == '__main__':
     cli()

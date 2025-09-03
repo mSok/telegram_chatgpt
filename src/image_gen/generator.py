@@ -42,7 +42,7 @@ class ImageGenerator:
 
         return image_io
 
-    async def generate_image_from_photo(self, prompt: str, photo_url: str) -> BytesIO | None:
+    async def generate_image_from_photo(self, prompt: str, photo_url: str | None) -> BytesIO | None:
             """
             Generate an image based on a prompt and input photo using Replicate
             :param prompt: Text prompt for image modification
@@ -55,7 +55,7 @@ class ImageGenerator:
                 # Prepare input for Replicate model that accepts image and prompt
                 input_data = {
                     "prompt": prompt,
-                    "image_input": [photo_url]
+                    "image_input": [photo_url] if photo_url else [],
                 }
 
                 response = await self.replicate.async_run(

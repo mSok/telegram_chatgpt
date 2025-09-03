@@ -140,6 +140,9 @@ async def on_message(update: telegram.Update, context: CallbackContext):
         and update.message.reply_to_message.photo
         and update.message.text
         and update.message.text.startswith(config.BANANO_PREFIX)
+    ) or (
+        update.message.text
+        and update.message.text.startswith(config.BANANO_PREFIX)
     ):
         return await generate_image_from_photo(update=update, context=context)
 

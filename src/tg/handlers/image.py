@@ -107,13 +107,14 @@ async def generate_image_from_photo(update: Update, context: CallbackContext):
 
     # Check if message contains photo and caption (prompt)
     message_photo = message.photo
-    message_caption = message.caption
+    message_caption = message.caption or message.text
+
     if message.reply_to_message and message.reply_to_message.photo:
         message_photo = message.reply_to_message.photo
         message_caption = message.text
 
 
-    if not message_photo or not message_caption:
+    if not message_caption:
         await context.bot.send_message(
             chat_id=message.chat_id,
             text="Please send a photo with a caption as the prompt for image generation.",
@@ -121,16 +122,17 @@ async def generate_image_from_photo(update: Update, context: CallbackContext):
         return
 
     # Get the photo and prompt
-    photo = message_photo[-1]  # Get the largest photo
     prompt = message_caption.strip()
     if not prompt.startswith(config.BANANO_PREFIX):
         return
-
     prompt = utils.remove_any_prefix(prompt, config.BANANO_PREFIX).strip()
 
-    # Get file URL from Telegram
-    file = await context.bot.get_file(photo.file_id)
-    photo_url = file.file_path
+    photo_url = None
+    if message_photo:
+        photo = message_photo[-1] # Get the largest photo
+        # Get file URL from Telegram
+        file = await context.bot.get_file(photo.file_id)
+        photo_url = file.file_path
 
     # Generate image from photo and prompt
     generator = ImageGenerator()
@@ -140,7 +142,7 @@ async def generate_image_from_photo(update: Update, context: CallbackContext):
         log.debug("Не удалось сгенерировать изображение.")
         await context.bot.send_message(
             chat_id=message.chat_id,
-            text="Упс! Что то пошло не так",
+            text="Упс Что то пошло не так",
             parse_mode=telegram.constants.ParseMode.MARKDOWN_V2,
         )
         return

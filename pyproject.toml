@@ -93,7 +93,7 @@ lint.ignore = [
 ]
 lint.unfixable = ["E712"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["src"]
 
 [tool.uv]

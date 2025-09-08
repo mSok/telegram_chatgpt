@@ -146,3 +146,66 @@ class ChatHistory(BaseModel):
     text = peewee.TextField()
     from_user = peewee.ForeignKeyField(TGUser, backref='user')
     reply_to = peewee.ForeignKeyField('self', null=True)
+
+
+class WordleDay(BaseModel):
+    """Глобальное слово дня для Wordle."""
+    date = peewee.DateField(unique=True)
+    word = peewee.TextField()
+    created_at = peewee.DateTimeField(default=datetime.now)
+
+    @classmethod
+    def get_or_pick_today(cls) -> "WordleDay":
+        from datetime import date as _date
+
+        today = _date.today()
+        existing = cls.get_or_none(cls.date == today)
+        if existing:
+            return existing
+
+        # Базовый список слов (русские 5-буквенные)
+        candidate_words = [
+            "лилия",
+            "выбег",
+            "гонка",
+            "собор",
+            "книга",
+        ]
+
+        # Простая детерминированная выборка по дате
+        index = (today.toordinal()) % len(candidate_words)
+        picked = candidate_words[index]
+        return cls.create(date=today, word=picked)
+
+
+class WordleAttempt(BaseModel):
+    """Попытки угадывания: на пользователя, чат и дату."""
+    created_at = peewee.DateTimeField(default=datetime.now)
+    date = peewee.DateField(index=True)
+    chat = peewee.ForeignKeyField(Chat, backref='wordle_attempts')
+    user = peewee.ForeignKeyField(TGUser, backref='wordle_attempts')
+    username = peewee.TextField(null=True)
+    attempt_number = peewee.IntegerField()  # 1..6
+    guess = peewee.TextField()
+    is_win = peewee.BooleanField(default=False)
+
+    class Meta:
+        indexes = (
+            # быстрые выборки по дню, чату, пользователю
+            (("date", "chat", "user"), False),
+        )
+
+    @classmethod
+    def get_attempts_count(cls, *, date_value, chat_id: int, user_id: int) -> int:
+        return (
+            cls.select()
+            .join(Chat)
+            .switch(cls)
+            .join(TGUser)
+            .where(
+                (cls.date == date_value)
+                & (cls.chat == chat_id)
+                & (cls.user == user_id)
+            )
+            .count()
+        )

@@ -71,10 +71,9 @@ jobs:
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: root
+          username: deploy
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /root/opt/telegram_chatgpt
-            ./deploy.sh
+            sudo /root/opt/telegram_chatgpt/deploy.sh
 

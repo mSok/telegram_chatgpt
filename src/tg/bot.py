@@ -9,6 +9,7 @@ from telegram.ext import (
 )
 
 from src import config
+from src.tg.handlers.image import generate_image_from_photo
 
 from .handlers import (
     add_chat_or_user,
@@ -41,7 +42,10 @@ async def post_init(application: Application) -> None:
     application.add_handler(CommandHandler("request", request))
     application.add_handler(CommandHandler("add_chat_or_user", add_chat_or_user))
     application.add_handler(CommandHandler("generate_image", generate_image))
+    # Add handler for photos with captions
+    application.add_handler(MessageHandler(filters.PHOTO & filters.CAPTION, generate_image_from_photo))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
+
 
     # Добавляем обработчик для callback
     application.add_handler(CallbackQueryHandler(button_callback))
